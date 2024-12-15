@@ -33,6 +33,13 @@
         android:text="Reset Goals"
         android:layout_marginBottom="16dp"/>
 
+    <Button
+        android:id="@+id/exportCsvButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Export Check History"
+        android:layout_marginBottom="16dp"/>
+
     <TextView
         android:id="@+id/timerTextView"
         android:layout_width="match_parent"

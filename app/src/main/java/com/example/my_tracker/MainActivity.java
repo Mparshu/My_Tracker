@@ -22,13 +22,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import android.content.Intent;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import android.net.Uri;
+
 public class MainActivity extends AppCompatActivity {
     private List<String> goals;
+    private List<String> checkHistory;
     private TextView totalViewCountTextView;
     private TextView timerTextView;
     private LinearLayout goalsContainer;
     private EditText goalInputEditText;
     private Button showGoalsButton;
+    private Button exportCsvButton;
     private int totalViewCount;
     private CountDownTimer countDownTimer;
     private long timeLeftInMillis;
@@ -38,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String GOALS_KEY = "goals";
     private static final String VIEW_COUNT_KEY = "viewCount";
     private static final String TIMER_KEY = "timerRemaining";
+    private static final String CHECK_HISTORY_KEY = "checkHistory";
     private static final long WAIT_TIME_MILLIS = 10 * 60 * 1000; // 10 minutes
 
     @Override
@@ -50,9 +63,13 @@ public class MainActivity extends AppCompatActivity {
         goalInputEditText = findViewById(R.id.goalInputEditText);
         Button addGoalButton = findViewById(R.id.addGoalButton);
         Button resetButton = findViewById(R.id.resetButton);
+        exportCsvButton = findViewById(R.id.exportCsvButton);
         showGoalsButton = findViewById(R.id.showGoalsButton);
         totalViewCountTextView = findViewById(R.id.totalViewCountTextView);
         timerTextView = findViewById(R.id.timerTextView);
+
+        // Initialize check history
+        checkHistory = loadCheckHistory();
 
         // Load saved data
         loadGoals();
@@ -96,6 +113,9 @@ public class MainActivity extends AppCompatActivity {
                 timerRunning = false;
                 showGoalsButton.setEnabled(true);
 
+                // Reset check history
+                checkHistory.clear();
+
                 // Save the reset state
                 saveGoals();
 
@@ -121,6 +141,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Export CSV Button Listener
+        exportCsvButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                exportCheckHistoryToCsv();
+            }
+        });
     }
 
     private void startTimer() {
@@ -142,6 +170,75 @@ public class MainActivity extends AppCompatActivity {
                 saveGoals();
             }
         }.start();
+    }
+
+    private void incrementViewCount() {
+        totalViewCount++;
+        updateViewCountDisplay();
+        saveGoals();
+        // Add timestamp to check history
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault());
+        String timestamp = sdf.format(new Date());
+        String historyEntry = timestamp + "|" + totalViewCount;
+        checkHistory.add(historyEntry);
+
+        // Save updated check history
+        saveCheckHistory();
+    }
+
+    private List<String> loadCheckHistory() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        String jsonHistory = prefs.getString(CHECK_HISTORY_KEY, null);
+        Type type = new TypeToken<ArrayList<String>>() {}.getType();
+
+        List<String> history = gson.fromJson(jsonHistory, type);
+        return history != null ? history : new ArrayList<>();
+    }
+
+    private void saveCheckHistory() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        Gson gson = new Gson();
+        String jsonHistory = gson.toJson(checkHistory);
+        editor.putString(CHECK_HISTORY_KEY, jsonHistory);
+        editor.apply();
+    }
+
+    private void exportCheckHistoryToCsv() {
+        // Create CSV file
+        File csvFile = new File(getExternalFilesDir(null), "goal_check_history.csv");
+
+        try {
+            FileWriter writer = new FileWriter(csvFile);
+            // Write header
+            writer.append("Timestamp|Counter\n");
+
+            // Write history entries
+            for (String entry : checkHistory) {
+                writer.append(entry).append("\n");
+            }
+            writer.flush();
+            writer.close();
+
+            // Share the file
+            Uri fileUri = FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".fileprovider",
+                    csvFile
+            );
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/csv");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(shareIntent, "Export Check History"));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error exporting CSV", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void updateTimerText() {
@@ -166,6 +263,16 @@ public class MainActivity extends AppCompatActivity {
             goals = new ArrayList<>();
         }
 
+        // Load check history
+        Gson historyGson = new Gson(); // Changed variable name to historyGson
+        String jsonHistory = prefs.getString(CHECK_HISTORY_KEY, null);
+        Type historyType = new TypeToken<ArrayList<String>>() {}.getType();
+        checkHistory = historyGson.fromJson(jsonHistory, historyType);
+
+        if (checkHistory == null) {
+            checkHistory = new ArrayList<>();
+        }
+
         // Load view count
         totalViewCount = prefs.getInt(VIEW_COUNT_KEY, 0);
         updateViewCountDisplay();
@@ -174,6 +281,8 @@ public class MainActivity extends AppCompatActivity {
         timeLeftInMillis = prefs.getLong(TIMER_KEY, 0);
         if (timeLeftInMillis > 0) {
             startTimer();
+        // Load check history
+        checkHistory = loadCheckHistory();
         }
     }
 
@@ -192,14 +301,14 @@ public class MainActivity extends AppCompatActivity {
         // Save timer state
         editor.putLong(TIMER_KEY, timeLeftInMillis);
 
+        // Save check history
+        Gson historyGson = new Gson(); // Changed variable name to historyGson
+        String jsonHistory = historyGson.toJson(checkHistory);
+        editor.putString(CHECK_HISTORY_KEY, jsonHistory);
+
         editor.apply();
     }
 
-    private void incrementViewCount() {
-        totalViewCount++;
-        updateViewCountDisplay();
-        saveGoals();
-    }
 
     private void updateViewCountDisplay() {
         totalViewCountTextView.setText("Total Goal Views: " + totalViewCount);
