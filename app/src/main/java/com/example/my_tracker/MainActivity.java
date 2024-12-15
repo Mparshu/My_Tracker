@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         goalsContainer = findViewById(R.id.goalsContainer);
         goalInputEditText = findViewById(R.id.goalInputEditText);
         Button addGoalButton = findViewById(R.id.addGoalButton);
+        Button resetButton = findViewById(R.id.resetButton);
         showGoalsButton = findViewById(R.id.showGoalsButton);
         totalViewCountTextView = findViewById(R.id.totalViewCountTextView);
         timerTextView = findViewById(R.id.timerTextView);
@@ -69,6 +70,41 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Reset Button Listener
+        resetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Reset goals
+                goals.clear();
+
+                // Reset view count
+                totalViewCount = 0;
+                updateViewCountDisplay();
+
+                // Clear goals container
+                goalsContainer.removeAllViews();
+
+                // Cancel existing timer if running
+                if (countDownTimer != null) {
+                    countDownTimer.cancel();
+                }
+
+                // Reset timer text
+                timerTextView.setText("Ready to check goals");
+                timeLeftInMillis = 0;
+                timerRunning = false;
+                showGoalsButton.setEnabled(true);
+
+                // Save the reset state
+                saveGoals();
+
+                // Show reset confirmation
+                Toast.makeText(MainActivity.this, "Goals Reset", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
 
         // Show Goals Button Listener
         showGoalsButton.setOnClickListener(new View.OnClickListener() {
