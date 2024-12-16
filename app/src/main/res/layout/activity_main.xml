@@ -27,13 +27,6 @@
         android:layout_marginBottom="16dp"/>
 
     <Button
-        android:id="@+id/resetButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Reset Goals"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
         android:id="@+id/exportCsvButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -61,14 +54,21 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="372dp">
 
         <LinearLayout
             android:id="@+id/goalsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"/>
+            android:orientation="vertical" />
 
     </ScrollView>
+
+    <Button
+        android:id="@+id/resetButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Reset Goals" />
 
 </LinearLayout>

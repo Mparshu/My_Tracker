@@ -29,8 +29,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import android.net.Uri;
+
+import androidx.appcompat.app.AlertDialog;
+import android.content.DialogInterface;
 
 public class MainActivity extends AppCompatActivity {
     private List<String> goals;
@@ -92,37 +94,49 @@ public class MainActivity extends AppCompatActivity {
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Reset goals
-                goals.clear();
+                // Show confirmation dialog
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Reset Goals")
+                        .setMessage("Are you sure you want to reset all goals and history?")
+                        .setPositiveButton("Reset", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Reset goals
+                                goals.clear();
 
-                // Reset view count
-                totalViewCount = 0;
-                updateViewCountDisplay();
+                                // Reset view count
+                                totalViewCount = 0;
+                                updateViewCountDisplay();
 
-                // Clear goals container
-                goalsContainer.removeAllViews();
+                                // Clear goals container
+                                goalsContainer.removeAllViews();
 
-                // Cancel existing timer if running
-                if (countDownTimer != null) {
-                    countDownTimer.cancel();
-                }
+                                // Cancel existing timer if running
+                                if (countDownTimer != null) {
+                                    countDownTimer.cancel();
+                                }
 
-                // Reset timer text
-                timerTextView.setText("Ready to check goals");
-                timeLeftInMillis = 0;
-                timerRunning = false;
-                showGoalsButton.setEnabled(true);
+                                // Reset timer text
+                                timerTextView.setText("Ready to check goals");
+                                timeLeftInMillis = 0;
+                                timerRunning = false;
+                                showGoalsButton.setEnabled(true);
 
-                // Reset check history
-                checkHistory.clear();
+                                // Reset check history
+                                checkHistory.clear();
 
-                // Save the reset state
-                saveGoals();
+                                // Save the reset state
+                                saveGoals();
 
-                // Show reset confirmation
-                Toast.makeText(MainActivity.this, "Goals Reset", Toast.LENGTH_SHORT).show();
+                                // Show reset confirmation
+                                Toast.makeText(MainActivity.this, "Goals Reset", Toast.LENGTH_SHORT).show();
+            }
+        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
             }
         });
+
 
 
 
